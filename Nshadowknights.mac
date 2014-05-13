@@ -1,0 +1,383 @@
+#include Spell_routines.inc
+#include actions.inc
+
+Sub Main
+  |----Detect Items------------------------------------------------------
+  #include clickies.inc
+
+  |----Detect Group Leaders------------------------------------------------------
+  #include groups.inc
+
+  /declare Command string outer
+  /declare Action string outer Nothing
+  /declare ChangeAction bool outer FALSE
+  /declare NewTarget bool outer TRUE
+  /declare RaidTarg int outer
+  /declare NewRaidTarg int outer
+  /declare RaidTargType string outer
+  /declare HealTarg int outer
+  /declare Arg1 string outer
+  /declare Arg2 string outer
+  /declare Arg3 string outer
+  /declare Arg4 string outer
+
+  /declare ExpCheck timer outer ${Math.Calc[${Math.Rand[100]}+200+${Me.Class.ID}]}
+  /declare j int outer 0
+  /if (!${Defined[Listening]}) /declare Listening bool outer TRUE
+  /declare MaintainIllusion bool outer FALSE
+  /declare ClassType string outer
+  /declare ChangeMelody bool outer TRUE
+  /declare Selos bool outer TRUE
+  /declare DiscActivate timer outer
+  /declare IntroAttack bool outer TRUE
+  /declare TryAttempts int outer 0
+  /declare AA1Timer timer outer 0
+  /declare LastZone int outer ${Zone.ID}
+  /declare ZoneChange bool outer FALSE
+
+  /declare PetStatus int outer 0
+  /declare PetBaneWeap timer outer 0
+  /declare AutoPet bool outer TRUE
+  /declare AutoPosition bool outer TRUE
+  /declare AutoDisc bool outer FALSE
+
+  /declare DebuffTimer timer outer 0
+  /declare Dot1Timer timer outer 0
+  /declare Dot2Timer timer outer 0
+  /declare Dot3Timer timer outer 0
+  /declare Dot4Timer timer outer 0
+  /declare Dot5Timer timer outer 0
+  /declare Dot6Timer timer outer 0
+  /declare PurgeCrapBuffsTimer timer outer 0
+
+  /declare TankCheck timer outer 0
+
+  /echo [${Time.Time24}] Macro active...
+  /call DetectGems
+  /call CheckGems
+  /call DetectSpells
+  /call Settings
+  /if (${Melee.Enable}) /melee off
+
+  :Loop
+  /if (${MacroQuest.GameState.Equal[INGAME]}) {
+    /doevents
+    /if (${Command.Length}>0) {
+      /if (${Listening}) {
+        /varset Action ${Command}
+        /varset ChangeAction TRUE
+      }
+      /varset Command
+    }
+    /if (${NewRaidTarg}>0) {
+      /if (${Listening}) {
+        /varset RaidTarg ${NewRaidTarg}
+      }
+      /varset NewRaidTarg 0
+    }
+
+    /if ((${Zone.ID} && ${Zone.ID}!=${LastZone}) || ${ZoneChange}) {
+      /varset ZoneChange TRUE
+      /call ZoneChange
+    }
+    
+    /if (${Action.NotEqual[Nothing]}) {
+      /if (${ChangeAction}) /varset ChangeAction FALSE
+      /if (${Action.NotEqual[Idle]} && ${MacroQuest.GameState.Equal[INGAME]}) /call ${Action}
+      /if (!${ChangeAction}) {
+        /if (${Cursor.ID} && ${Action.Equal[Combat]}) /autoinv
+        /doevents
+        /if (!${ChangeAction} && ${MacroQuest.GameState.Equal[INGAME]}) /call CheckLevels
+        /doevents
+        /if (!${ChangeAction} && ${MacroQuest.GameState.Equal[INGAME]}) /call CheckStatus
+        /doevents
+        /if (!${ChangeAction} && ${MacroQuest.GameState.Equal[INGAME]}) /call CheckBuffs
+        /doevents
+      }
+    }
+  }
+  /goto :Loop
+
+Sub CheckLevels
+  /if (${ExpCheck}==0) /call BalExp
+
+  /if (${Defined[DonorWristHeal]} && ${FindItem[${DonorWristHeal}].Timer}==0 && ${Me.PctHPs}<20) {
+    /echo [${Time.Time24}] Clicking ${DonorWristHeal}
+    /call cast ${DonorWristHeal} item
+    /return
+  }
+|--Mana Clickies----------------------------------------------------------------
+  /if (${Defined[ZenurixStone]} && ${Me.PctMana}<40 && ${FindItem[${ZenurixStone}].Timer}==0) {
+    /echo [${Time.Time24}] Clicking ${ZenurixStone}
+    /call cast ${ZenurixStone} item
+  }
+/return
+
+Sub CheckGems
+  /if ((${Gem1} && !${Me.Gem[1].ID}) || (${Gem2} && !${Me.Gem[2].ID}) || (${Gem3} && !${Me.Gem[3].ID}) || (${Gem4} && !${Me.Gem[4].ID}) || (${Gem5} && !${Me.Gem[5].ID}) || (${Gem6} && !${Me.Gem[6].ID}) || (${Gem7} && !${Me.Gem[7].ID}) || (${Gem8} && !${Me.Gem[8].ID}) || (${Gem9} && !${Me.Gem[9].ID})) {
+    /echo [${Time.Time24}] Memming spells
+    /memspellset ${SpellSet}
+    /delay 5
+    :WaitForMem
+    /if (${Window[SpellBookWnd].Open}) {
+      /delay 1
+      /goto :WaitForMem
+    }
+    /call DetectSpells
+  }
+/return
+
+Sub CheckBuffs
+
+  /if (${Defined[ImmortalityShield]} && ${ImmortalityShieldTimer}==0 && !${Me.Buff[${ImmortalityShieldBuff}].ID}) {
+    /echo [${Time.Time24}] Clicking ${ImmortalityShield}
+    /call cast ${ImmortalityShield} item
+    /varset ImmortalityShieldTimer 196
+  }
+
+  /if (${Defined[OverHaste]} && !${Me.Buff[${OverHasteBuff}].ID}) {
+    /echo [${Time.Time24}] Clicking ${OverHaste}
+    /call cast ${OverHaste} item
+    /return
+  }
+
+  /if (${Defined[FormOfDefense]} && !${Me.Buff[${FormOfDefenseBuff}].ID}) {
+    /echo [${Time.Time24}] Clicking ${FormOfDefense}
+    /call cast ${FormOfDefense} item
+    /return
+  }
+
+  /if (${Defined[DonorBoot]} && ${FindItem[${DonorBoot}].Timer}==0 && !${Me.Buff[${DonorBootBuff}].ID}) {
+    /echo [${Time.Time24}] Clicking ${DonorBoot}
+    /call cast ${DonorBoot} item
+    /return
+  }
+
+  /if (${Defined[DonorLeg]} && !${Me.Buff[${DonorLegBuff}].ID} && ${FindItem[${DonorLeg}].Timer}==0 && ${Action.NotEqual[Combat]}) {
+    /echo [${Time.Time24}] Clicking ${DonorLeg}
+    /call cast ${DonorLeg} item
+  }
+  
+  /if (${Defined[GroupProc]} && ${Action.Equal[Combat]} && !${Me.Buff[${GroupProc}].ID} && ${Me.TargetOfTarget.ID}!=${Me.ID}) {
+    /echo [${Time.Time24}] Casting ${GroupProc}
+    /call WaitForSpellReady ${GroupProc}
+    /call cast ${GroupProc}
+    /return
+  }
+
+  /if (${Action.Equal[Idle]}) {
+    /if (${Defined[CloakBuff]} && !${Me.Buff[${CloakBuff}].ID}) {
+      /echo [${Time.Time24}] Buffing ${CloakBuff}
+      /call WaitForSpellReady ${CloakBuff}
+      /call cast ${CloakBuff}
+    }
+    /if (${Defined[ProcBuff]} && !${Me.Buff[${ProcBuff}].ID}) {
+      /echo [${Time.Time24}] Buffing ${ProcBuff}
+      /call WaitForSpellReady ${ProcBuff}
+      /call cast ${ProcBuff}
+    }
+    /if (${Defined[CritShoulder]} && !${Me.Buff[${CritShoulderBuff}].ID}) {
+      /echo [${Time.Time24}] Rebuffing ${CritShoulderBuff}
+      /call cast ${CritShoulder} item
+      /return
+    }
+    /if (${Defined[DestChaosMask]} && !${Me.Buff[${DestChaosMaskBuff}].ID}) {
+      /echo [${Time.Time24}] Clicking ${DestChaosMask}
+      /call cast ${DestChaosMask} item
+      /return
+    }
+    /if (${Defined[DSK3HateRange]} && !${Me.Buff[${DSK3HateRangeBuff}].ID}) {
+      /squelch /tar ID ${Me.ID}
+      /delay 3
+      /echo [${Time.Time24}] Clicking ${DSK3HateRange}
+      /call cast ${DSK3HateRange} item
+      /delay 2
+      /return
+    }
+    /if (${Defined[WoSPet]} && !${Me.Buff[${WoSPetBuff}].ID}  && ${WoSPetTimer}==0) {
+      /declare HasPet bool local FALSE
+      /if (${Me.Pet.ID}) /varset HasPet TRUE
+      /echo [${Time.Time24}] Buffing ${WoSPetBuff}
+      /call cast ${WoSPet} item
+      /if (!${Macro.Return.Equal[CAST_INTERRUPTED]}) {
+        /varset WoSPetTimer 6000
+        /delay 5
+        /if (!${HasPet}) /pet get lost
+      } else {
+        /varset WoSPetTimer 300
+      }
+      /return
+    }
+  }
+/return
+
+Sub Combat
+  /if (!${Spawn[id ${RaidTarg}].ID} || ${Spawn[id ${RaidTarg}].Type.Equal[Corpse]}) {
+    /if (${Action.Equal[Combat]}) {
+      /varset Action Hold
+    }
+    /varset ChangeAction TRUE
+    /call CheckBoss
+    /return
+  } else /if (${Spawn[id ${RaidTarg}].ID} &&  (!${Target.ID} || ${Target.ID}!=${RaidTarg})) {
+    /squelch /tar ID ${RaidTarg}
+    /delay 3
+  }
+
+  /if (${Action.Equal[Combat]} && (${Target.Type.NotEqual[NPC]} || !${Target.ID})) {
+    /varset ChangeAction TRUE
+    /varset Action Hold
+    /call CheckBoss
+    /return
+  }
+
+  /if (${NewTarget}) {
+    /echo [${Time.Time24}] Attacking...
+    /call CheckBoss
+    /if (!${Defined[Seravince]} && ${AutoPosition} && ${Target.LineOfSight}) {
+      /call Position
+    }
+    /varset NewTarget FALSE
+  }
+
+  /if (${AutoPosition} && ((${Target.Distance} > 12 && ${Target.Distance} < 200) || ${Target.Distance}<6)) {
+    /call Position
+  }
+
+  /if (!${Me.Combat}) /attack on
+
+  /if (${SpawnCount[npc radius 50]}>2) {
+    /if (${Defined[AOEAggro]} && ${Me.SpellReady[${AOEAggro}]}) {
+      /echo [${Time.Time24}] Casting ${AOEAggro}
+      /call cast ${AOEAggro}
+      /return
+    }
+
+    /if (${Defined[NadoxPrism]} && ${NadoxPrismTimer}==0) {
+      /echo [${Time.Time24}] Clicking ${NadoxPrism}
+      /call cast ${NadoxPrism} item
+      /if (!${Macro.Return.Equal[CAST_INTERRUPTED]}) {
+        /varset NadoxPrismTimer 1795
+      }
+      /return
+    }
+
+    /if (${Defined[DSKTankHelm]} && ${DSKTankHelmTimer}==0) {
+      /echo [${Time.Time24}] Clicking ${DSKTankHelm}
+      /call cast ${DSKTankHelm} item
+      /if (!${Macro.Return.Equal[CAST_INTERRUPTED]}) {
+        /varset DSKTankHelmTimer 1795
+      }
+    }
+  }
+  /if (${FindItemCount[${NadoxTankShield}]} && ${FindItem[${NadoxTankShield}].Timer}==0 && ${Target.Distance}<${Math.Calc[${NadoxTankShieldRange}*${RangeMod}]}) {
+    /echo [${Time.Time24}] Clicking ${NadoxTankShield}
+    /call cast ${NadoxTankShield} item
+    /delay 2
+  }
+
+  /if (${Defined[DonorWeapon20]} && !${Me.Buff[${DonorWeapon20Buff}].ID} && ${FindItem[${DonorWeapon20}].Timer}==0) {
+    /echo [${Time.Time24}] Clicking ${DonorWeapon20}
+    /call cast ${DonorWeapon20} item
+    /return
+  }
+
+  /if (${Defined[DonorWeapon10]} && !${Me.Buff[${DonorWeapon10Buff}].ID} && ${RaidTarg}!=${Vasella}) {
+    /echo [${Time.Time24}] Clicking ${DonorWeapon10}
+    /call cast ${DonorWeapon10} item
+    /return
+  }
+
+  /if (${Defined[DonorLeg]} && ${FindItem[${DonorLeg}].Timer}==0 && !${Me.Buff[${DonorLegBuff}].ID} && ${Target.Distance}<13) {
+    /echo [${Time.Time24}] Clicking ${DonorLeg}
+    /call cast ${DonorLeg} item
+    /return
+  }
+
+  /if (${Defined[ChaosWrist]} && !${Me.Buff[${ChaosWristBuff}].ID} && ${ChaosWristTimer}==0) {
+    /echo [${Time.Time24}] Clicking ${ChaosWrist}
+    /call cast ${ChaosWrist} item
+    /varset ChaosWristTimer 6000
+    /pet get lost
+    /return
+  }
+
+  /if (!${Defined[Vule]} && ${FindItemCount[${BoomStick}]} && ${FindItem[${BoomStick}].Timer}==0 && ${Target.Distance}<${Math.Calc[${BoomStickRange}*${RangeMod}]}) {
+    /echo [${Time.Time24}] Clicking ${BoomStick}
+    /call cast ${BoomStick} item
+    /return
+  }
+
+  /if (${Defined[Epic15]} && ${FindItem[${Epic15}].Timer}==0) {
+    /echo [${Time.Time24}] Clicking ${Epic15}
+    /call cast ${Epic15} item
+    /return
+  }
+
+  /if (${Defined[Epic20]} && ${FindItem[${Epic20}].Timer}==0) {
+    /echo [${Time.Time24}] Clicking ${Epic20}
+    /call cast ${Epic20} item
+    /return
+  }
+  
+  /if (${Defined[DSK3TankEar]} && ${FindItem[${DSK3TankEar}].Timer}==0) {
+    /echo [${Time.Time24}] Clicking ${DSK3TankEar}
+    /call cast ${DSK3TankEar} item
+    /return
+  }
+/return
+
+Sub Burn
+  /varset Action Combat
+/return
+
+Sub ShortBuff
+  /if (!${ChangeAction} && ${Action.Equal[ShortBuff]}) {
+    /varset ChangeAction TRUE
+    /varset Action Nothing
+  }
+/return
+
+Sub LongBuff
+  /if (!${ChangeAction} && ${Action.Equal[LongBuff]}) {
+    /varset ChangeAction TRUE
+    /varset Action Nothing
+  }
+/return
+
+Sub DetectSpells
+|----Detect Spells------------------------------------------------------
+    /call FindRank "Grasp of Death Rk."
+    /if (${Macro.Return.Length}>3 && !${Defined[Lifetap]}) /declare Lifetap string outer ${Macro.Return}
+
+    /call FindRank "Beholder's Gaze Rk."
+    /if (${Macro.Return.Length}>3 && !${Defined[AOEAggro]}) /declare AOEAggro string outer ${Macro.Return}
+
+    /call FindRank "Death March"
+    /if (${Macro.Return.Length}>3 && !${Defined[GroupProc]}) /declare GroupProc string outer ${Macro.Return}
+
+    /if (${Me.Gem[Cloak of Cazic]}>0 && !${Defined[CloakBuff]}) /declare CloakBuff string outer "Cloak of Cazic"
+    /if (${Me.Gem[Cloak of Rallos]}>0 && !${Defined[CloakBuff]}) /declare CloakBuff string outer "Cloak of Rallos"
+    /if (${Me.Gem[Shroud of Discord]}>0 && !${Defined[ProcBuff]}) /declare ProcBuff string outer "Shroud of Discord"
+/return
+
+|---Enrage-----------------------------------------------------------------
+#Event Enrage "|${Target.CleanName}| has become ENRAGED#*#"
+
+Sub Event_Enrage
+  /if (${Target.PctHPs}<11) {
+    /echo [${Time.Time24}] Enrage detected!
+    /declare EnrageTimer timer local 100
+    :EnrageLoop
+    /if (${EnrageTimer}>0 && (${Action.Equal[Combat]} || ${Action.Equal[Killnear]}) && !${NewTarget} && !${ChangeAction}) {
+      /delay 1
+      /if (${Math.Abs[${Me.Heading.Degrees}-${Target.Heading.Degrees}]}>=90 && ${Math.Abs[${Me.Heading.Degrees}-${Target.Heading.Degrees}]}<=270) {
+        /if (${Me.Combat}) /attack off
+      } else {
+        /if (!${Me.Combat}) /attack on
+      }
+      /if (!${Spawn[id ${RaidTarg}].ID} || ${Spawn[id ${RaidTarg}].Type.Equal[Corpse]}) /return
+      /goto :EnrageLoop
+    }
+  }
+/return
