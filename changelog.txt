@@ -1,0 +1,85 @@
+2014 May 5
+  [Overview]
+  *Added support for Wall of Slaughter pet quest items
+
+  [File Edits]
+  *clickies.inc
+    Added a check for Art of the Murkglider/Feran/Chimera.
+  *N<classname>.mac, all of them
+    Added a short routine to check for, cast, and maintain the WoS Pet Quest buff within Sub CheckBuffs
+
+2014 April 30
+  [Overview]
+  *Clerics will now keep a Heal Over Time (HoT) buff up on their tank, based on a timer. Dispels are not accounted for.
+  *Healers will now interrupt their mana-consuming heals if the target's HP reaches 90% or higher.
+  *Added Gem Lined Boots (DSK3) to macros for healers.
+  *Rebroadcasting of tells should now eliminate all sneaky NPC message from being broadcast to EQBCServer
+
+  [File Edits]
+  *Nclerics.mac
+    Now uses Dot1Timer to maintain a HoT on the tank. Note** The logic does not cast on multiple tanks. Just the one that happens to be taking hits when the timer is ready
+  *Nclerics,Ndruids,Nshaman.mac
+    /call cast ${ManaHeal} has been modified to specify calling Sub CheckHP to see if the target is nearly full HP after the initial cast has begun
+    Added several lines to Sub CheckLevels to balance group member health with AA Divine Arbitration and/or Gem Lined Boots
+  *clickies.inc
+    Added a check for Gem Line Boots (DSK3)
+  *actions.inc
+    Modified Sub Event_BroadcastTell to check ${MacroQuest.LastTell} to reference if the message really came from a player. Could fail with messages while zoning.
+
+2014 April 26
+  [Overview]
+  *Added a chat event to handling the staking of vampires
+  *Removed the previous handling for staking vampires
+  *Added a few items to clickies.inc and removed their hard-coded entries throughout the macros
+  *Fixed the KhasvaPetEar variables to prevent loop stuck-age and misnamed variable
+  *Made AOEMez breakable
+  *Melee will no longer try to position if the target is not in line of sight (because that usually resulted in running endlessly into a wall when there was no LoS)
+
+  [File Edits]
+  *MacroQuest.ini
+    Added /stickend
+    Added /forest
+    Added /vale
+  *actions.inc
+    Added Sub Event_StakeVamp
+    Modified Sub GHTeleport
+    Modified AOEMez sub to be breakable by changing the value of Action
+  *clickies.inc
+    Added check for LuckyGHTeleport
+    Modified KhasvaPetEar variable names
+  *Nmages,Nnecros,Nenchanters,Nbeastlords.mac
+    Fixed KhasvaPetEar buff handling
+  *All Melee class macs
+    Added a check for Line of Sight before calling Sub Position
+  *Spell_routines.inc
+    Added checks for VasellaHide and StakeVamp while players are casting
+
+2014 April 23
+  [Overview]
+  *Added an alias to end stick called /stickend
+  *Added support for more clicky portal items. Users can now use /forest to port to the forest and /vale to port to the vale, if they have the corresponding clicky item.
+  *Fixed /reznear so that it no longer occasionally skips casting rez on certain corpses.
+  *Fixed /reznear to hide NPC corpses first, rez player corpses, then show npc corpses again.
+  *Fixed /coh and /cohteam so that it no longer grabs non-team members and/or continues when it is supposed to stop.
+  *Shaman and Druids will no longer summon the Statue of Draekon pet (because it sucks). Enchanters still do.
+  *Changed the handling of the Khasva (DSK3) pet ear buff to keep track of whether the pet is powered up or not.
+  *Fixed the rebroadcasting of tells so that pets and certain npc's are not mistakenly broadcasted.
+
+  [File Edits]
+  *MacroQuest.ini
+    Added /stickend
+    Added /forest
+    Added /vale
+  *actions.inc
+    Added Sub ForestTeleport
+    Added Sub ValeTeleport
+    Modified Sub HOHTeleport
+    Fixed Sub COH to no longer use /timed to avoid the chance of the /timed command executing at an unwanted time
+    Fixed Sub RezNear. Added targeting checks and a loop + timer combo for extra tries
+    Fixed Sub BroadcastTell. Added checks for pets and NPC's with a hidden '000' after their name
+  *clickies.inc
+    Added check for ForestCharm
+    Added check for ValeToken
+    Added check for HOHPortalFrag
+  *Spell_routines.inc
+    Added more checks to combat disconnects due to /exchange and /cast
