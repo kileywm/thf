@@ -1,0 +1,67 @@
+INSTRUCTIONS
+[0] Be sure MacroQuest is not running.
+
+[1] Copy over macro files to the Macros folder.
+  actions.inc
+  EDITMEgroups.inc
+  clickies.inc
+  class.mac
+  Spell_routines.inc
+  
+[1.5] Copy over MacroQuest.ini to your main MQ2 folder.
+  MacroQuest.ini
+
+[2] Copy over class macros to the Macros folder.
+  class.mac
+  Nbards.mac
+  Nberserkers.mac
+  etc...
+  
+    Your files should now look like...
+  |-[MQ2_Emu]
+  |-  MacroQuest.ini
+  |-  [Macros]
+  |-    actions.inc
+  |-    clickies.inc
+  |-    Spell_routines.inc
+  |-    class.mac
+  |-    groups.inc
+  |-    Nbards.mac
+        etc...
+
+[3] Modify EDITMEgroups.inc to contain your characters' names and the appropriate number of players you will be boxing.
+  [3.1] Change GroupLead[x] to where x is the number of groups you have.
+    Example:
+      For 3 groups...
+      /if (!${Defined[GroupLead]})      /declare GroupLead[3] string outer UNDEFINED-ARRAY-ELEMENT
+  [3.2] If you have 3 groups, then there should be 3 group leaders. Modify the GroupLead array elements to contain group leader names. Create or delete the necessary lines.
+    Example:
+      For 3 groups...
+      /varset GroupLead[1] Mand
+      /varset GroupLead[2] Tweety
+      /varset GroupLead[3] Barnyard
+      
+      For 1 group...
+      /varset GroupLead[1] Mand
+  [3.3] Rename EDITMEgroups.inc to just groups.inc when you are done editing it. If you do not, the macros will not be able to find it.
+
+[4] Start EQBCServer.exe
+
+[5] Start MacroQuest2.exe
+
+[6] Once all characters are logged in issue the following command to start their macros:
+  /macros
+
+  Alternatively, if you want to initiate the macro on just one character, then you need only type /mac class.
+
+[7] To see all available commands, simply type /commands while the macro is running.
+
+[8] The first command you may want to do is /stickme. This will assemble all of your players together, sticking to the player who issued the command.
+
+  The / commands were designed where most follow a consistent format. A / command will be obeyed by the character issuing it. To broadcast it to all players on your team, simply add a 'b' (for broadcast) at the front of it.
+  /hold will cause you to hold all actions.
+  /bhold will broadcast to all players to hold all actions.
+
+[9] When not in a raid... to initiate combat on ONLY ONE character (applies to all, even healers), simply target the mob (even healers target the mob) and type /solo.
+
+[10] Also notice that there are some handy alternative macros like godlypoints.mac that I was too lazy to implement into the full macro.
